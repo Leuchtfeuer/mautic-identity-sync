@@ -1,2 +1,2 @@
-# mautic-mcontrol
-Allow Sync of Identity from outside system e.g. CMS login, though a control pixel with parameters
+# Leuchtfeuer Identity-Sync
+Allow sync of Mautic lead identity from external systems (e.g. CMS login) through a control-pixel with query-parameter.

@@ -15,8 +15,26 @@ return [
     ],
     'services' => [
         'command' => [],
+        'controllers' => [
+            'leuchtfeueridentitysync.controller.public' => [
+                'class' => \MauticPlugin\LeuchtfeuerIdentitySyncBundle\Controller\PublicController::class,
+                'arguments' => [
+                    'doctrine.orm.entity_manager',
+                    'leuchtfeueridentitysync.model.page',
+                    'mautic.lead.model.lead',
+                    'mautic.page.model.redirect',
+                    'mautic.page.model.trackable',
+                    'mautic.queue.service',
+                    'mautic.tracker.contact',
+                    'mautic.tracker.device',
+                    'mautic.helper.ip_lookup',
+                    'mautic.helper.cookie',
+                    'monolog.logger.mautic',
+                ],
+            ],
+        ],
         'other' => [
-            'identitysync.config' => [
+            'leuchtfeueridentitysync.config' => [
                 'class' => \MauticPlugin\LeuchtfeuerIdentitySyncBundle\Integration\Config::class,
                 'arguments' => [
                     'mautic.integrations.helper',
@@ -25,7 +43,29 @@ return [
         ],
         'events' => [],
         'forms' => [],
-        'models' => [],
+        'models' => [
+            'leuchtfeueridentitysync.model.page' => [
+                'class' => \MauticPlugin\LeuchtfeuerIdentitySyncBundle\Model\PageModel::class,
+                'arguments' => [
+                    'mautic.helper.cookie',
+                    'mautic.helper.ip_lookup',
+                    'mautic.lead.model.lead',
+                    'mautic.lead.model.field',
+                    'mautic.page.model.redirect',
+                    'mautic.page.model.trackable',
+                    'mautic.queue.service',
+                    'mautic.lead.model.company',
+                    'mautic.tracker.device',
+                    'mautic.tracker.contact',
+                    'mautic.helper.core_parameters',
+                ],
+                'methodCalls' => [
+                    'setCatInUrl' => [
+                        '%mautic.cat_in_page_url%',
+                    ],
+                ],
+            ],
+        ],
         'fixtures' => [],
         'integrations' => [
             'mautic.integration.leuchtfeueridentitysync' => [

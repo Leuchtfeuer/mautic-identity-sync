@@ -6,11 +6,16 @@ use Doctrine\ORM\EntityManager;
 use Mautic\CoreBundle\Controller\FormController as CommonFormController;
 use Mautic\CoreBundle\Helper\CookieHelper;
 use Mautic\CoreBundle\Helper\TrackingPixelHelper;
+use Mautic\LeadBundle\Entity\Lead;
+use Mautic\LeadBundle\Model\LeadModel;
 use MauticPlugin\LeuchtfeuerIdentitySyncBundle\Model\PageModel;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class PublicController extends CommonFormController
 {
+    public const PARAM_IDENTIFIER_FIELDS = ['id', 'email'];
+
     protected EntityManager $entityManager;
     protected PageModel $pageModel;
     protected CookieHelper $cookieHelper;
@@ -48,52 +53,62 @@ class PublicController extends CommonFormController
         $query = \array_merge($get, $post);
 
         if (empty($query)) {
-            return new Response();
+            return $this->createPixelResponse($this->request);
         }
 
         // check if at least one query param-field unique and public updatable
-        /** @var \Mautic\LeadBundle\Model\LeadModel $model */
+        /** @var LeadModel $model */
         $leadModel = $this->getModel('lead');
+
+        /** @var Lead $leadFromQuery */
         [$leadFromQuery, $publiclyUpdatableFieldValues] = $leadModel->checkForDuplicateContact($query, null, true, true);
 
-        if (empty($publiclyUpdatableFieldValues)) {
-            return new Response();
+        // check if cookie-lead exists
+        $leadFromCookie = $this->request->cookies->get('mtc_id', null);
+
+        if ($leadFromCookie !== null) {
+            /** @var Lead $leadFromCookie */
+            $leadFromCookie = $leadModel->getEntity($leadFromCookie);
         }
 
-        // check if Mautic cookie with lead-id exists
-        $leadIdFromCookie = $this->request->cookies->get('mtc_id', null);
-        if (null === $leadIdFromCookie) {
+        if (empty($leadFromCookie)) {
             // create lead with values from query param and set cookie
             $this->entityManager->persist($leadFromQuery);
             $this->entityManager->flush();
             $this->cookieHelper->setCookie('mtc_id', $leadFromQuery->getId(), null);
-            return TrackingPixelHelper::getResponse($this->request);
+            return $this->createPixelResponse($this->request);
         }
 
-        // get lead-id from cookie to compare against query param
-        $leadFromCookie = $leadModel->getEntity($leadIdFromCookie);
-        if (empty($leadFromCookie)) {
-            return new Response();
-        }
-
-        $leadFieldsEqual = true;
+        // check if the param-lead and cookie-lead are identical
+        $leadUpdated = false;
         foreach ($publiclyUpdatableFieldValues as $leadField => $value) {
             $fieldGetterName = 'get' . ucfirst($leadField); // @todo: probably improvement for fields with underscore needed
 
+            // @todo: problem because e.g. for title both are null, so update on cookie-lead does not happen
             if ($leadFromCookie->$fieldGetterName() !== $leadFromQuery->$fieldGetterName()) {
-                $leadFieldsEqual = false;
-                // lead identified by param is different from lead identified by cookie!
-                // exchange cookie by lead-id from param
-                break;
+                // param-lead is different from cookie-lead! check if the field from cookie-lead is empty
+                if (empty($leadFromCookie->$fieldGetterName())) {
+                    // update cookie-lead with values from param-lead
+                    $fieldSetterName = 'set' . ucfirst($leadField); // @todo: probably improvement for fields with underscore needed
+                    $leadFromCookie->$fieldSetterName($leadFromQuery->$fieldGetterName());
+                    $leadUpdated = true;
+                }
             }
         }
 
-        // @todo: WIP continue
+        if ($leadUpdated) {
+            // update cookie-lead with values from param-lead if public-updatable
+            $this->entityManager->persist($leadFromCookie);
+            $this->entityManager->flush();
 
-        if ($leadFieldsEqual) {
-            // update $leadFromCookie with values from param if public-updatable
+            // exchange cookie with ID from param-lead
+            //$this->cookieHelper->setCookie('mtc_id', $leadFromQuery->getId(), null);
         }
 
+        return $this->createPixelResponse($this->request);
+    }
+
+    protected function createPixelResponse(Request $request): Response {
         return TrackingPixelHelper::getResponse($this->request);
     }
 }

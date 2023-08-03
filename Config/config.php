@@ -8,7 +8,7 @@ return [
     'routes' => [
         'public' => [
             'identity_control' => [
-                'path' => '/identity-control.gif',
+                'path' => '/mcontrol.gif',
                 'controller' => 'LeuchtfeuerIdentitySyncBundle:Public:identityControlImage',
             ],
         ],
@@ -20,7 +20,6 @@ return [
                 'class' => \MauticPlugin\LeuchtfeuerIdentitySyncBundle\Controller\PublicController::class,
                 'arguments' => [
                     'doctrine.orm.entity_manager',
-                    'leuchtfeueridentitysync.model.page',
                     'mautic.helper.cookie',
                 ],
             ],
@@ -35,29 +34,7 @@ return [
         ],
         'events' => [],
         'forms' => [],
-        'models' => [
-            'leuchtfeueridentitysync.model.page' => [
-                'class' => \MauticPlugin\LeuchtfeuerIdentitySyncBundle\Model\PageModel::class,
-                'arguments' => [
-                    'mautic.helper.cookie',
-                    'mautic.helper.ip_lookup',
-                    'mautic.lead.model.lead',
-                    'mautic.lead.model.field',
-                    'mautic.page.model.redirect',
-                    'mautic.page.model.trackable',
-                    'mautic.queue.service',
-                    'mautic.lead.model.company',
-                    'mautic.tracker.device',
-                    'mautic.tracker.contact',
-                    'mautic.helper.core_parameters',
-                ],
-                'methodCalls' => [
-                    'setCatInUrl' => [
-                        '%mautic.cat_in_page_url%',
-                    ],
-                ],
-            ],
-        ],
+        'models' => [],
         'fixtures' => [],
         'integrations' => [
             'mautic.integration.leuchtfeueridentitysync' => [

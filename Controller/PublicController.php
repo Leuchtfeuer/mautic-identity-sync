@@ -9,38 +9,25 @@ use Mautic\CoreBundle\Controller\FormController as CommonFormController;
 use Mautic\CoreBundle\Helper\CookieHelper;
 use Mautic\CoreBundle\Helper\TrackingPixelHelper;
 use Mautic\LeadBundle\Entity\Lead;
+use Mautic\LeadBundle\Entity\LeadRepository;
 use Mautic\LeadBundle\Model\LeadModel;
-use MauticPlugin\LeuchtfeuerIdentitySyncBundle\Model\PageModel;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class PublicController extends CommonFormController
 {
     protected EntityManager $entityManager;
-    protected PageModel $pageModel;
     protected CookieHelper $cookieHelper;
+    protected LeadRepository $leadRepository;
     protected array $publiclyUpdatableFieldValues = [];
 
     public function __construct(
         EntityManager $entityManager,
-        PageModel $pageModel,
         CookieHelper $cookieHelper
     ) {
         $this->entityManager = $entityManager;
-        $this->pageModel = $pageModel;
         $this->cookieHelper = $cookieHelper;
     }
-
-    /**
-     * this works like the original, but using the custom page-model to allow modifications
-     * @return Response
-     * @throws \Exception
-     */
-    /*public function identityControlImageAction(): Response
-    {
-        $this->pageModel->customPageHit(null, $this->request);
-        return TrackingPixelHelper::getResponse($this->request);
-    }*/
 
     /**
      * @return Response
@@ -50,7 +37,6 @@ class PublicController extends CommonFormController
     {
         $get  = $this->request->query->all();
         $post = $this->request->request->all();
-
         $query = \array_merge($get, $post);
 
         // end response if no query params are given
@@ -61,6 +47,7 @@ class PublicController extends CommonFormController
         // check if at least one query param-field is a unique-identifier and publicly-updatable
         /** @var LeadModel $model */
         $leadModel = $this->getModel('lead');
+        $this->leadRepository = $leadModel->getRepository();
 
         /** @var Lead $leadFromQuery */
         [$leadFromQuery, $this->publiclyUpdatableFieldValues] = $leadModel->checkForDuplicateContact($query, null, true, true);
@@ -87,8 +74,7 @@ class PublicController extends CommonFormController
         // no cookie-lead is available
         if (empty($leadFromCookie)) {
             // create lead with values from query param, set cookie and end response
-            $this->entityManager->persist($leadFromQuery);
-            $this->entityManager->flush();
+            $this->leadRepository->saveEntity($leadFromQuery);
             $this->cookieHelper->setCookie('mtc_id', $leadFromQuery->getId(), null);
             return $this->createPixelResponse($this->request);
         }
@@ -109,7 +95,7 @@ class PublicController extends CommonFormController
         };
         if ($uniqueIdentifiersFromQueryLeadMatchingLead($leadFromCookie)) {
             // update publicly-updatable fields of cookie-lead with query param values and end response
-            $this->updateLeadWithQueryParams($leadFromCookie);
+            $this->updateLeadWithQueryParams($leadFromCookie, $query);
             return $this->createPixelResponse($this->request);
         }
 
@@ -138,8 +124,7 @@ class PublicController extends CommonFormController
         }
 
         // create new lead with values from query, set cookie and end response
-        $this->entityManager->persist($leadFromQuery);
-        $this->entityManager->flush();
+        $this->leadRepository->saveEntity($leadFromQuery);
         $this->cookieHelper->setCookie('mtc_id', $leadFromQuery->getId(), null);
 
         return $this->createPixelResponse($this->request);
@@ -161,8 +146,7 @@ class PublicController extends CommonFormController
         }
 
         if ($leadUpdated) {
-            $this->entityManager->persist($lead);
-            $this->entityManager->flush();
+            $this->leadRepository->saveEntity($lead);
         }
     }
 
@@ -173,11 +157,11 @@ class PublicController extends CommonFormController
     /**
      * it's not easy to extend the LeadFieldRepository, so we use this controller method instead
      *
-     * @param $object
+     * @param string $object
      * @return mixed[]
      * @throws \Doctrine\DBAL\Exception
      */
-    protected function getUniqueIdentifierFieldNames($object = 'lead')
+    protected function getUniqueIdentifierFieldNames(string $object = 'lead'): ?array
     {
         $qb = $this->entityManager->getConnection()->createQueryBuilder();
 

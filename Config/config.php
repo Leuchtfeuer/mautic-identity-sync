@@ -20,6 +20,8 @@ return [
                 'class' => \MauticPlugin\LeuchtfeuerIdentitySyncBundle\Controller\PublicController::class,
                 'arguments' => [
                     'doctrine.orm.entity_manager',
+                    'mautic.tracker.contact',
+                    'mautic.tracker.device',
                     'mautic.helper.cookie',
                 ],
             ],

@@ -11,21 +11,29 @@ use Mautic\CoreBundle\Helper\TrackingPixelHelper;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Entity\LeadRepository;
 use Mautic\LeadBundle\Model\LeadModel;
+use Mautic\LeadBundle\Tracker\ContactTracker;
+use Mautic\LeadBundle\Tracker\DeviceTracker;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class PublicController extends CommonFormController
 {
     protected EntityManager $entityManager;
+    protected ContactTracker $contactTracker;
+    protected DeviceTracker $deviceTracker;
     protected CookieHelper $cookieHelper;
     protected LeadRepository $leadRepository;
     protected array $publiclyUpdatableFieldValues = [];
 
     public function __construct(
         EntityManager $entityManager,
+        ContactTracker $contactTracker,
+        DeviceTracker $deviceTracker,
         CookieHelper $cookieHelper
     ) {
         $this->entityManager = $entityManager;
+        $this->contactTracker = $contactTracker;
+        $this->deviceTracker = $deviceTracker;
         $this->cookieHelper = $cookieHelper;
     }
 
@@ -73,9 +81,14 @@ class PublicController extends CommonFormController
 
         // no cookie-lead is available
         if (empty($leadFromCookie)) {
+            // check if a query-lead exists as contact already, if not creating a new one
+            if ($leadFromQuery->getId() > 0) {
+                $this->contactTracker->setTrackedContact($leadFromQuery);
+            }
+
             // create lead with values from query param, set cookie and end response
-            $this->leadRepository->saveEntity($leadFromQuery);
-            $this->cookieHelper->setCookie('mtc_id', $leadFromQuery->getId(), null);
+            $lead = $this->contactTracker->getContact(); // this call does not set the given query-params, we've to manually add them
+            $this->updateLeadWithQueryParams($lead, $query);
             return $this->createPixelResponse($this->request);
         }
 
@@ -84,7 +97,7 @@ class PublicController extends CommonFormController
             $result = true;
             foreach ($uniqueLeadIdentifiers as $uniqueLeadIdentifier) {
                 if (array_key_exists($uniqueLeadIdentifier, $query)) {
-                    $fieldGetterName = 'get' . ucfirst($uniqueLeadIdentifier); // @todo: probably improvement for fields with underscore needed
+                    $fieldGetterName = 'get' . $uniqueLeadIdentifier; // the CustomFieldEntityTrait handles the correct method-name to get/set the field (also when using underscores)
                     if ($lead->$fieldGetterName() !== $leadFromQuery->$fieldGetterName()) {
                         $result = false;
                         break;
@@ -94,6 +107,10 @@ class PublicController extends CommonFormController
             return $result;
         };
         if ($uniqueIdentifiersFromQueryLeadMatchingLead($leadFromCookie)) {
+            // we call ContactTracker->getContact() here to update the last-activity
+            $this->contactTracker->setTrackedContact($leadFromCookie);
+            $this->contactTracker->getContact();
+
             // update publicly-updatable fields of cookie-lead with query param values and end response
             $this->updateLeadWithQueryParams($leadFromCookie, $query);
             return $this->createPixelResponse($this->request);
@@ -102,6 +119,8 @@ class PublicController extends CommonFormController
         // exchange cookie with ID from query-lead and end response
         if ($leadFromQuery->getId() > 0) {
             $this->cookieHelper->setCookie('mtc_id', $leadFromQuery->getId(), null);
+            // create a device for the lead here which sets the device-tracking cookies
+            $this->deviceTracker->createDeviceFromUserAgent($leadFromQuery, $this->request->server->get('HTTP_USER_AGENT'));
             return $this->createPixelResponse($this->request);
         }
 
@@ -109,7 +128,7 @@ class PublicController extends CommonFormController
         $uniqueIdentifiersFromCookieLeadAreEmpty = function (Lead $lead) use ($uniqueLeadIdentifiers) {
             $result = false;
             foreach ($uniqueLeadIdentifiers as $uniqueLeadIdentifier) {
-                $fieldGetterName = 'get' . ucfirst($uniqueLeadIdentifier); // @todo: probably improvement for fields with underscore needed
+                $fieldGetterName = 'get' . $uniqueLeadIdentifier; // the CustomFieldEntityTrait handles the correct method-name to get/set the field (also when using underscores)
                 if (empty($lead->$fieldGetterName())) {
                     $result = true;
                     break;
@@ -127,6 +146,15 @@ class PublicController extends CommonFormController
         $this->leadRepository->saveEntity($leadFromQuery);
         $this->cookieHelper->setCookie('mtc_id', $leadFromQuery->getId(), null);
 
+        // manually log last active for new created lead
+        if (!defined('MAUTIC_LEAD_LASTACTIVE_LOGGED')) {
+            $this->leadRepository->updateLastActive($leadFromQuery->getId());
+            define('MAUTIC_LEAD_LASTACTIVE_LOGGED', 1);
+        }
+
+        // create a device for the lead here which sets the device-tracking cookies
+        $this->deviceTracker->createDeviceFromUserAgent($leadFromQuery, $this->request->server->get('HTTP_USER_AGENT'));
+
         return $this->createPixelResponse($this->request);
     }
 
@@ -140,7 +168,7 @@ class PublicController extends CommonFormController
 
         foreach ($this->publiclyUpdatableFieldValues as $leadField => $value) {
             // update lead with values from query
-            $fieldSetterName = 'set' . ucfirst($leadField); // @todo: probably improvement for fields with underscore needed
+            $fieldSetterName = 'set' . $leadField; // the CustomFieldEntityTrait handles the correct method-name to get/set the field (also when using underscores)
             $lead->$fieldSetterName($query[$leadField]);
             $leadUpdated = true;
         }

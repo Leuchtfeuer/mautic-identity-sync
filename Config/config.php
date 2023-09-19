@@ -19,7 +19,7 @@ return [
             'leuchtfeueridentitysync.controller.public' => [
                 'class' => \MauticPlugin\LeuchtfeuerIdentitySyncBundle\Controller\PublicController::class,
                 'arguments' => [
-                    'doctrine.orm.entity_manager',
+                    'leuchtfeueridentitysync.utility.data_provider',
                     'mautic.tracker.contact',
                     'mautic.tracker.device',
                     'mautic.helper.cookie',
@@ -33,9 +33,23 @@ return [
                     'mautic.integrations.helper',
                 ],
             ],
+            'leuchtfeueridentitysync.utility.data_provider' => [
+                'class' => \MauticPlugin\LeuchtfeuerIdentitySyncBundle\Utility\DataProviderUtility::class,
+                'arguments' => [
+                    'doctrine.orm.entity_manager',
+                ],
+            ],
         ],
         'events' => [],
-        'forms' => [],
+        'forms' => [
+            'leuchtfeueridentitysync.form.type.config_features' => [
+                'class' => \MauticPlugin\LeuchtfeuerIdentitySyncBundle\Form\Type\ConfigFeaturesType::class,
+                'arguments' => [
+                    'leuchtfeueridentitysync.utility.data_provider',
+                    'mautic.lead.model.field',
+                ],
+            ],
+        ],
         'models' => [],
         'fixtures' => [],
         'integrations' => [

@@ -13,12 +13,13 @@ use Mautic\LeadBundle\Entity\LeadRepository;
 use Mautic\LeadBundle\Model\LeadModel;
 use Mautic\LeadBundle\Tracker\ContactTracker;
 use Mautic\LeadBundle\Tracker\DeviceTracker;
+use MauticPlugin\LeuchtfeuerIdentitySyncBundle\Utility\DataProviderUtility;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class PublicController extends CommonFormController
 {
-    protected EntityManager $entityManager;
+    protected DataProviderUtility $dataProviderUtility;
     protected ContactTracker $contactTracker;
     protected DeviceTracker $deviceTracker;
     protected CookieHelper $cookieHelper;
@@ -26,12 +27,12 @@ class PublicController extends CommonFormController
     protected array $publiclyUpdatableFieldValues = [];
 
     public function __construct(
-        EntityManager $entityManager,
+        DataProviderUtility $dataProviderUtility,
         ContactTracker $contactTracker,
         DeviceTracker $deviceTracker,
         CookieHelper $cookieHelper
     ) {
-        $this->entityManager = $entityManager;
+        $this->dataProviderUtility = $dataProviderUtility;
         $this->contactTracker = $contactTracker;
         $this->deviceTracker = $deviceTracker;
         $this->cookieHelper = $cookieHelper;
@@ -59,7 +60,7 @@ class PublicController extends CommonFormController
 
         /** @var Lead $leadFromQuery */
         [$leadFromQuery, $this->publiclyUpdatableFieldValues] = $leadModel->checkForDuplicateContact($query, null, true, true);
-        $uniqueLeadIdentifiers = $this->getUniqueIdentifierFieldNames();
+        $uniqueLeadIdentifiers = $this->dataProviderUtility->getUniqueIdentifierFieldNames();
 
         $isAtLeastOneUniqueIdentifierPubliclyUpdatable = function () use ($uniqueLeadIdentifiers) {
             $publiclyUpdatableFieldNames = array_keys($this->publiclyUpdatableFieldValues);
@@ -180,38 +181,5 @@ class PublicController extends CommonFormController
 
     protected function createPixelResponse(Request $request): Response {
         return TrackingPixelHelper::getResponse($this->request);
-    }
-
-    /**
-     * it's not easy to extend the LeadFieldRepository, so we use this controller method instead
-     *
-     * @param string $object
-     * @return mixed[]
-     * @throws \Doctrine\DBAL\Exception
-     */
-    protected function getUniqueIdentifierFieldNames(string $object = 'lead'): ?array
-    {
-        $qb = $this->entityManager->getConnection()->createQueryBuilder();
-
-        $result = $qb->select('f.alias, f.is_unique_identifer as is_unique, f.type, f.object')
-            ->from(MAUTIC_TABLE_PREFIX.'lead_fields', 'f')
-            ->where($qb->expr()->and(
-                $qb->expr()->eq('object', ':object'),
-                $qb->expr()->eq('is_unique_identifer', 1),
-            ))
-            ->setParameter('object', $object)
-            ->orderBy('f.field_order', 'ASC')
-            ->execute()->fetchAll();
-
-        if (empty($result)) {
-            return null;
-        }
-
-        $fieldNames = [];
-        foreach ($result as $item) {
-            $fieldNames[] = $item['alias'];
-        }
-
-        return $fieldNames;
     }
 }

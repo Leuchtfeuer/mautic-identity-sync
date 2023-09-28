@@ -143,8 +143,8 @@ class PublicController extends CommonFormController
                 if (!empty($featureSettings['parameter_secondary'] ?? null)) {
                     $fieldGetterNameSecondary = 'get' . $featureSettings['parameter_secondary'];
 
-                    // if the previous check is true / is a match, then the secondary-parameter has to exist in the query and has to match too
-                    if ($result && (!array_key_exists($featureSettings['parameter_secondary'], $query) || $lead->$fieldGetterNameSecondary() !== ($query[$featureSettings['parameter_secondary']] ?? ''))) {
+                    // check if the secondary-parameter exist in the query and that it matches the query-lead, if not stop processing here
+                    if (!array_key_exists($featureSettings['parameter_secondary'], $query) || $leadFromQuery->$fieldGetterNameSecondary() !== ($query[$featureSettings['parameter_secondary']] ?? '')) {
                         // the secondary-parameter didn't match. we stop processing here by throwing an exception to force the caller to implement a handling like writing a log or audit entry (seen as $result = false, but to stop processing we use an exception)
                         throw new EnforceMatchingException(sprintf('The given lead #%d matches the query-lead #%d using configured primary-parameter "%s" for identification, but the secondary-parameter "%s" did not match!', $lead->getId(), $leadFromQuery->getId(), $featureSettings['parameter_primary'], $featureSettings['parameter_secondary']), 1695899935);
                     }

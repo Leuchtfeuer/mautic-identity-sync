@@ -13,12 +13,14 @@ use Mautic\LeadBundle\Entity\LeadRepository;
 use Mautic\LeadBundle\Model\LeadModel;
 use Mautic\LeadBundle\Tracker\ContactTracker;
 use Mautic\LeadBundle\Tracker\DeviceTracker;
+use MauticPlugin\LeuchtfeuerIdentitySyncBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerIdentitySyncBundle\Utility\DataProviderUtility;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class PublicController extends CommonFormController
 {
+    protected Config $config;
     protected DataProviderUtility $dataProviderUtility;
     protected ContactTracker $contactTracker;
     protected DeviceTracker $deviceTracker;
@@ -27,11 +29,13 @@ class PublicController extends CommonFormController
     protected array $publiclyUpdatableFieldValues = [];
 
     public function __construct(
+        Config $config,
         DataProviderUtility $dataProviderUtility,
         ContactTracker $contactTracker,
         DeviceTracker $deviceTracker,
         CookieHelper $cookieHelper
     ) {
+        $this->config = $config;
         $this->dataProviderUtility = $dataProviderUtility;
         $this->contactTracker = $contactTracker;
         $this->deviceTracker = $deviceTracker;
@@ -44,6 +48,11 @@ class PublicController extends CommonFormController
      */
     public function identityControlImageAction(): Response
     {
+        // do nothing if plugin is disabled
+        if (!$this->config->isPublished()) {
+            return $this->createPixelResponse($this->request);
+        }
+
         $get  = $this->request->query->all();
         $post = $this->request->request->all();
         $query = \array_merge($get, $post);
@@ -88,7 +97,12 @@ class PublicController extends CommonFormController
             }
 
             // create lead with values from query param, set cookie and end response
-            $lead = $this->contactTracker->getContact(); // this call does not set the given query-params, we've to manually add them
+            $lead = $this->contactTracker->getContact(); // this call does not set the given query-params, we've to manually add them via updateLeadWithQueryParams()
+
+            if ($lead === null) {
+                throw new \Exception('No contact was created, usually this means that an active user-session (Mautic login) was found! Try it again in another browser or use a tab in privacy-mode.', 1695886959);
+            }
+
             $this->updateLeadWithQueryParams($lead, $query);
             return $this->createPixelResponse($this->request);
         }

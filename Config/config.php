@@ -19,6 +19,7 @@ return [
             'leuchtfeueridentitysync.controller.public' => [
                 'class' => \MauticPlugin\LeuchtfeuerIdentitySyncBundle\Controller\PublicController::class,
                 'arguments' => [
+                    'leuchtfeueridentitysync.config',
                     'leuchtfeueridentitysync.utility.data_provider',
                     'mautic.tracker.contact',
                     'mautic.tracker.device',

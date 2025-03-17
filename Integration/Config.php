@@ -26,7 +26,7 @@ class Config
     }
 
     /**
-     * @return array<mixed>
+     * @return array<string, mixed>
      */
     public function getFeatureSettings(): array
     {

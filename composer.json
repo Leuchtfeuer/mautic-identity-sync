@@ -1,9 +1,17 @@
 {
   "name": "leuchtfeuer/mautic-identity-sync",
   "description": "Allow sync of Mautic lead identity from external systems (e.g. CMS login) through a control-pixel with query-parameter.",
-  "license": "closed",
+  "license": "GPL-3.0-or-later",
   "type": "mautic-plugin",
-  "homepage": "https://www.leuchtfeuer.com",
+  "authors": [
+        {
+          "name": "Leuchtfeuer Digital Marketing GmbH",
+          "email": "mautic-plugins@Leuchtfeuer.com",
+          "homepage": "https://Leuchtfeuer.com/mautic/",
+          "role": "Developer"
+        }
+      ],
+  "keywords": ["mautic","plugin","integration","contacts", "pixel"],
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {

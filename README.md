@@ -1,7 +1,9 @@
 # Leuchtfeuer Identity-Sync
 Allow sync of Mautic lead identity from external systems (e.g. CMS login) through a control-pixel with query-parameter.
 
-## Requirements
+## Requirements for this release
+> [!TIP]
+> Other releases of this plugin may cover different Mautic versions!
 - Mautic 5.x (minimum 5.1)
 - PHP 8.1 or higher
 
@@ -52,14 +54,12 @@ Secondary parameter (optional): specify an additional query-parameter which is u
 3. Optional: pass additional attributes or custom-fields of Mautic contacts to the control-pixel to update them (make sure that these attributes are set to "Publicly updatable"!): `mcontrol.gif?email=my-customer@domain.net&title=Sir&my_custom_field=Demo-Value`.
 
 ## Known Issues
-List any current issues or limitations.
 
 ## Troubleshooting
 Make sure you have not only installed but also enabled the Plugin.
 If things are still funny, please try
 `php bin/console cache:clear`
-and
-`php bin/console mautic:assets:generate`
+
 
 ## Change log
 - https://github.com/Leuchtfeuer/mautic-identity-sync/releases

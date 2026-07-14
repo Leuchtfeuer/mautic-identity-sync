@@ -69,13 +69,43 @@ final class FixtureHelper
         $this->em->flush();
     }
 
-    public function createContact(string $email, ?string $firstname = null): Lead
+    public function makeFieldNotPubliclyUpdatable(string $alias): void
+    {
+        $field = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => $alias]);
+
+        if (null === $field) {
+            throw new \RuntimeException(sprintf('LeadField with alias "%s" not found.', $alias));
+        }
+
+        $field->setIsPubliclyUpdatable(false);
+        $this->em->persist($field);
+        $this->em->flush();
+    }
+
+    public function setFieldUniqueIdentifier(string $alias, bool $isUnique): void
+    {
+        $field = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => $alias]);
+
+        if (null === $field) {
+            throw new \RuntimeException(sprintf('LeadField with alias "%s" not found.', $alias));
+        }
+
+        $field->setIsUniqueIdentifier($isUnique);
+        $this->em->persist($field);
+        $this->em->flush();
+    }
+
+    public function createContact(string $email, ?string $firstname = null, ?string $mobile = null): Lead
     {
         $contact = new Lead();
         $contact->setEmail($email);
 
         if (null !== $firstname) {
             $contact->setFirstname($firstname);
+        }
+
+        if (null !== $mobile) {
+            $contact->setMobile($mobile);
         }
 
         $this->em->persist($contact);

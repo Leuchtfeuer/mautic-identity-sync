@@ -106,7 +106,7 @@ class PublicController extends AbstractFormController
         $cookieId       = $request->cookies->get('mtc_id');
         $leadFromCookie = null !== $cookieId ? $leadModel->getEntity($cookieId) : null;
 
-        if (empty($leadFromCookie)) {
+        if (!$leadFromCookie instanceof \Mautic\LeadBundle\Entity\Lead) {
             return $this->processWithoutCookie($leadFromQuery, $query, $featureSettings, $leadRepository);
         }
 

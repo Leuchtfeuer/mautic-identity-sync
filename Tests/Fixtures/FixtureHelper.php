@@ -14,8 +14,8 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 final class FixtureHelper
 {
     public function __construct(
-        private EntityManagerInterface $em,
-        private KernelBrowser $client,
+        private readonly EntityManagerInterface $em,
+        private readonly KernelBrowser $client,
     ) {
     }
 

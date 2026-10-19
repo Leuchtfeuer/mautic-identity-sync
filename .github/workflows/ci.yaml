@@ -1,0 +1,13 @@
+name: CI Workflow
+
+on:
+  pull_request:
+
+jobs:
+  ci-workflow:
+    name: CI
+    uses: Leuchtfeuer/mautic-ci-runner/.github/workflows/complete-ci.yaml@main
+    with:
+      skipCodeReview: true
+    secrets:
+      PERSONAL_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}

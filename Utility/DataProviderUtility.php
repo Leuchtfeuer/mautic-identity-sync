@@ -15,11 +15,11 @@ class DataProviderUtility
     /**
      * It's not easy to extend the LeadFieldRepository, so we use this utility method to return unique contact field-names.
      *
-     * @return mixed[]|null
+     * @return string[]
      *
      * @throws \Doctrine\DBAL\Exception
      */
-    public function getUniqueIdentifierFieldNames(string $object = 'lead'): ?array
+    public function getUniqueIdentifierFieldNames(string $object = 'lead'): array
     {
         $qb = $this->entityManager->getConnection()->createQueryBuilder();
 
@@ -31,10 +31,10 @@ class DataProviderUtility
             ))
             ->setParameter('object', $object)
             ->orderBy('f.field_order', 'ASC')
-            ->execute()->fetchAll();
+            ->executeQuery()->fetchAllAssociative();
 
         if (empty($result)) {
-            return null;
+            return [];
         }
 
         $fieldNames = [];

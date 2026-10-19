@@ -13,6 +13,7 @@ class LeuchtfeuerIdentitySyncIntegration extends BasicIntegration implements Bas
     use ConfigurationTrait;
 
     public const NAME         = 'leuchtfeueridentitysync';
+
     public const DISPLAY_NAME = 'Identity-Sync';
 
     public function getName(): string

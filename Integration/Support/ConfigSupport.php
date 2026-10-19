@@ -14,10 +14,6 @@ class ConfigSupport extends LeuchtfeuerIdentitySyncIntegration implements Config
 {
     use DefaultConfigFormTrait;
 
-    public function __construct()
-    {
-    }
-
     public function getFeatureSettingsConfigFormName(): string
     {
         return ConfigFeaturesType::class;

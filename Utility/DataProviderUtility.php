@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerIdentitySyncBundle\Utility;
 
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 
 class DataProviderUtility
 {
-    public function __construct(protected EntityManager $entityManager)
+    public function __construct(protected EntityManagerInterface $entityManager)
     {
     }
 

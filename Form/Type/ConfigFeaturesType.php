@@ -14,7 +14,7 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 
 class ConfigFeaturesType extends AbstractType
 {
-    public function __construct(protected DataProviderUtility $dataProviderUtility, protected FieldModel $fieldModel)
+    public function __construct(protected DataProviderUtility $dataProviderUtility, protected FieldModel $fieldModel, private readonly \Mautic\LeadBundle\Entity\LeadFieldRepository $leadFieldRepository)
     {
     }
 
@@ -43,13 +43,13 @@ class ConfigFeaturesType extends AbstractType
                     'tooltip' => 'leuchtfeueridentitysync.config.parameter_primary.tooltip',
                 ],
                 'constraints' => [
-                    new NotBlank(['message' => 'mautic.core.value.required']),
+                    new NotBlank(message: 'mautic.core.value.required'),
                 ],
             ],
         );
 
         $parameterSecondaryChoices = [];
-        $leadFields                = $this->fieldModel->getRepository()->getFieldAliases('lead');
+        $leadFields                = $this->leadFieldRepository->getFieldAliases('lead');
         foreach ($leadFields as $leadField) {
             $parameterSecondaryChoices[$leadField['alias']] = $leadField['alias'];
         }

@@ -11,11 +11,11 @@ use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 
-final class FixtureHelper
+final readonly class FixtureHelper
 {
     public function __construct(
-        private readonly EntityManagerInterface $em,
-        private readonly KernelBrowser $client,
+        private EntityManagerInterface $em,
+        private KernelBrowser $client,
     ) {
     }
 

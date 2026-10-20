@@ -7,7 +7,6 @@ namespace MauticPlugin\LeuchtfeuerIdentitySyncBundle\Tests\Functional\Controller
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Lead;
 use MauticPlugin\LeuchtfeuerIdentitySyncBundle\Tests\Fixtures\FixtureHelper;
-use PHPUnit\Framework\Assert;
 use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -40,10 +39,10 @@ final class PublicControllerFunctionalTest extends MauticMysqlTestCase
         self::assertResponseIsSuccessful();
 
         $mtcCookie = $this->getMtcIdCookieFromResponse();
-        Assert::assertNotNull($mtcCookie);
-        Assert::assertSame((string) $contact->getId(), $mtcCookie->getValue());
+        $this->assertInstanceOf(\Symfony\Component\HttpFoundation\Cookie::class, $mtcCookie);
+        $this->assertSame((string) $contact->getId(), $mtcCookie->getValue());
         $this->em->clear();
-        Assert::assertSame('bbb', $this->em->getRepository(Lead::class)->find($contact->getId())->getFirstname());
+        $this->assertSame('bbb', $this->em->getRepository(Lead::class)->find($contact->getId())->getFirstname());
     }
 
     /** Confluence Test Case 2 */
@@ -56,10 +55,10 @@ final class PublicControllerFunctionalTest extends MauticMysqlTestCase
         self::assertResponseIsSuccessful();
 
         $this->em->clear();
-        Assert::assertSame($countBefore + 1, $this->em->getRepository(Lead::class)->count([]));
+        $this->assertSame($countBefore + 1, $this->em->getRepository(Lead::class)->count([]));
         $newLead = $this->em->getRepository(Lead::class)->findOneBy(['email' => 'newlead@example.com']);
-        Assert::assertNotNull($newLead);
-        Assert::assertSame((string) $newLead->getId(), $this->getMtcIdCookieFromResponse()->getValue());
+        $this->assertInstanceOf(Lead::class, $newLead);
+        $this->assertSame((string) $newLead->getId(), $this->getMtcIdCookieFromResponse()->getValue());
     }
 
     /** Confluence Test Case 3 */
@@ -75,8 +74,8 @@ final class PublicControllerFunctionalTest extends MauticMysqlTestCase
         self::assertResponseIsSuccessful();
 
         $this->em->clear();
-        Assert::assertSame($countBefore, $this->em->getRepository(Lead::class)->count([]));
-        Assert::assertSame('bbb', $this->em->getRepository(Lead::class)->find($contact->getId())->getFirstname());
+        $this->assertSame($countBefore, $this->em->getRepository(Lead::class)->count([]));
+        $this->assertSame('bbb', $this->em->getRepository(Lead::class)->find($contact->getId())->getFirstname());
     }
 
     /** Confluence Test Case 4 */
@@ -91,8 +90,8 @@ final class PublicControllerFunctionalTest extends MauticMysqlTestCase
         self::assertResponseIsSuccessful();
 
         $mtcCookie = $this->getMtcIdCookieFromResponse();
-        Assert::assertNotNull($mtcCookie);
-        Assert::assertSame((string) $leadB->getId(), $mtcCookie->getValue());
+        $this->assertInstanceOf(\Symfony\Component\HttpFoundation\Cookie::class, $mtcCookie);
+        $this->assertSame((string) $leadB->getId(), $mtcCookie->getValue());
     }
 
     /** Confluence Test Case 5 */
@@ -107,10 +106,10 @@ final class PublicControllerFunctionalTest extends MauticMysqlTestCase
         self::assertResponseIsSuccessful();
 
         $this->em->clear();
-        Assert::assertSame($countBefore + 1, $this->em->getRepository(Lead::class)->count([]));
+        $this->assertSame($countBefore + 1, $this->em->getRepository(Lead::class)->count([]));
         $mtcCookie = $this->getMtcIdCookieFromResponse();
-        Assert::assertNotNull($mtcCookie);
-        Assert::assertNotSame((string) $identifiedContact->getId(), $mtcCookie->getValue());
+        $this->assertInstanceOf(\Symfony\Component\HttpFoundation\Cookie::class, $mtcCookie);
+        $this->assertNotSame((string) $identifiedContact->getId(), $mtcCookie->getValue());
     }
 
     /** Confluence Test Case 6 */
@@ -125,10 +124,10 @@ final class PublicControllerFunctionalTest extends MauticMysqlTestCase
         self::assertResponseIsSuccessful();
 
         $this->em->clear();
-        Assert::assertSame($countBefore + 1, $this->em->getRepository(Lead::class)->count([]));
+        $this->assertSame($countBefore + 1, $this->em->getRepository(Lead::class)->count([]));
         $mtcCookie = $this->getMtcIdCookieFromResponse();
-        Assert::assertNotNull($mtcCookie);
-        Assert::assertNotSame((string) $contact->getId(), $mtcCookie->getValue());
+        $this->assertInstanceOf(\Symfony\Component\HttpFoundation\Cookie::class, $mtcCookie);
+        $this->assertNotSame((string) $contact->getId(), $mtcCookie->getValue());
     }
 
     /** Confluence Test Case 7 */
@@ -147,11 +146,11 @@ final class PublicControllerFunctionalTest extends MauticMysqlTestCase
         self::assertResponseIsSuccessful();
 
         $this->em->clear();
-        Assert::assertSame($countBefore + 1, $this->em->getRepository(Lead::class)->count([]));
+        $this->assertSame($countBefore + 1, $this->em->getRepository(Lead::class)->count([]));
         $mtcCookie = $this->getMtcIdCookieFromResponse();
-        Assert::assertNotNull($mtcCookie);
-        Assert::assertNotSame((string) $contact->getId(), $mtcCookie->getValue());
-        Assert::assertSame('aaa', $this->em->getRepository(Lead::class)->find($contact->getId())->getFirstname());
+        $this->assertInstanceOf(\Symfony\Component\HttpFoundation\Cookie::class, $mtcCookie);
+        $this->assertNotSame((string) $contact->getId(), $mtcCookie->getValue());
+        $this->assertSame('aaa', $this->em->getRepository(Lead::class)->find($contact->getId())->getFirstname());
     }
 
     /** Confluence Test Case 8 */
@@ -171,9 +170,9 @@ final class PublicControllerFunctionalTest extends MauticMysqlTestCase
         self::assertResponseIsSuccessful();
 
         $this->em->clear();
-        Assert::assertSame($countBefore, $this->em->getRepository(Lead::class)->count([]));
-        Assert::assertNull($this->getMtcIdCookieFromResponse());
-        Assert::assertSame('John', $this->em->getRepository(Lead::class)->find($contact->getId())->getFirstname());
+        $this->assertSame($countBefore, $this->em->getRepository(Lead::class)->count([]));
+        $this->assertNotInstanceOf(\Symfony\Component\HttpFoundation\Cookie::class, $this->getMtcIdCookieFromResponse());
+        $this->assertSame('John', $this->em->getRepository(Lead::class)->find($contact->getId())->getFirstname());
     }
 
     private function getMtcIdCookieFromResponse(): ?\Symfony\Component\HttpFoundation\Cookie

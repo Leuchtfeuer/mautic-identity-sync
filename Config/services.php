@@ -16,4 +16,14 @@ return static function (ContainerConfigurator $configurator): void {
 
     $services->load('MauticPlugin\\LeuchtfeuerIdentitySyncBundle\\', '../')
         ->exclude('../{'.implode(',', array_merge(MauticCoreExtension::DEFAULT_EXCLUDES, ['rector.php'])).'}');
+
+    $services->get(MauticPlugin\LeuchtfeuerIdentitySyncBundle\Integration\LeuchtfeuerIdentitySyncIntegration::class)
+        ->tag('mautic.integration')
+        ->tag('mautic.basic_integration');
+
+    $services->get(MauticPlugin\LeuchtfeuerIdentitySyncBundle\Integration\Support\ConfigSupport::class)
+        ->tag('mautic.config_integration');
+
+    $services->alias('mautic.integration.leuchtfeueridentitysync', MauticPlugin\LeuchtfeuerIdentitySyncBundle\Integration\LeuchtfeuerIdentitySyncIntegration::class)
+        ->public();
 };

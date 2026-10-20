@@ -48,6 +48,7 @@ class PublicController extends AbstractFormController
         protected IpLookupHelper $ipLookupHelper,
         protected AuditLogModel $auditLogModel,
         protected Logger $logger,
+        protected LeadRepository $leadRepository,
         RequestStack $requestStack,
         ManagerRegistry $doctrine,
         ModelFactory $modelFactory,
@@ -88,11 +89,10 @@ class PublicController extends AbstractFormController
 
         $query = array_merge($request->query->all(), $request->request->all());
 
-        if (empty($query)) {
+        if ([] === $query) {
             return $this->anonymousTrackingResponse();
         }
 
-        $leadRepository                     = $leadModel->getRepository();
         $result                             = $leadModel->checkForDuplicateContact($query, true, true);
         /** @var Lead $leadFromQuery */
         $leadFromQuery                      = $result[0];
@@ -107,17 +107,17 @@ class PublicController extends AbstractFormController
         $leadFromCookie = null !== $cookieId ? $leadModel->getEntity($cookieId) : null;
 
         if (!$leadFromCookie instanceof Lead) {
-            return $this->processWithoutCookie($leadFromQuery, $query, $featureSettings, $leadRepository);
+            return $this->processWithoutCookie($leadFromQuery, $query, $featureSettings);
         }
 
-        return $this->processWithCookie($leadFromCookie, $leadFromQuery, $query, $featureSettings, $leadRepository, $uniqueLeadIdentifiers);
+        return $this->processWithCookie($leadFromCookie, $leadFromQuery, $query, $featureSettings, $uniqueLeadIdentifiers);
     }
 
     /**
      * @param array<string, mixed> $query
      * @param array<string, mixed> $featureSettings
      */
-    private function processWithoutCookie(Lead $leadFromQuery, array $query, array $featureSettings, LeadRepository $leadRepository): Response
+    private function processWithoutCookie(Lead $leadFromQuery, array $query, array $featureSettings): Response
     {
         if (!array_key_exists($featureSettings['parameter_primary'], $query)) {
             return $this->anonymousTrackingResponse();
@@ -145,7 +145,7 @@ class PublicController extends AbstractFormController
             return $this->createPixelResponse();
         }
 
-        $this->updateLeadWithQueryParams($lead, $query, $leadRepository);
+        $this->updateLeadWithQueryParams($lead, $query);
 
         return $this->createPixelResponse();
     }
@@ -155,7 +155,7 @@ class PublicController extends AbstractFormController
      * @param array<string, mixed> $featureSettings
      * @param string[]             $uniqueLeadIdentifiers
      */
-    private function processWithCookie(Lead $leadFromCookie, Lead $leadFromQuery, array $query, array $featureSettings, LeadRepository $leadRepository, array $uniqueLeadIdentifiers): Response
+    private function processWithCookie(Lead $leadFromCookie, Lead $leadFromQuery, array $query, array $featureSettings, array $uniqueLeadIdentifiers): Response
     {
         if (!array_key_exists($featureSettings['parameter_primary'], $query)) {
             return $this->anonymousTrackingResponse();
@@ -167,7 +167,7 @@ class PublicController extends AbstractFormController
                 $this->contactTracker->setTrackedContact($leadFromCookie);
                 $this->contactTracker->getContact();
 
-                $this->updateLeadWithQueryParams($leadFromCookie, $query, $leadRepository);
+                $this->updateLeadWithQueryParams($leadFromCookie, $query);
 
                 return $this->createPixelResponse();
             }
@@ -182,12 +182,12 @@ class PublicController extends AbstractFormController
         }
 
         if ($this->hasCookieLeadEmptyUniqueIdentifiers($leadFromCookie, $uniqueLeadIdentifiers)) {
-            $this->updateLeadWithQueryParams($leadFromCookie, $query, $leadRepository);
+            $this->updateLeadWithQueryParams($leadFromCookie, $query);
 
             return $this->createPixelResponse();
         }
 
-        return $this->processNewLead($leadFromQuery, $leadRepository);
+        return $this->processNewLead($leadFromQuery);
     }
 
     /**
@@ -202,15 +202,15 @@ class PublicController extends AbstractFormController
         return $this->createPixelResponse();
     }
 
-    private function processNewLead(Lead $leadFromQuery, LeadRepository $leadRepository): Response
+    private function processNewLead(Lead $leadFromQuery): Response
     {
-        $leadRepository->saveEntity($leadFromQuery);
+        $this->leadRepository->saveEntity($leadFromQuery);
         $this->cookieHelper->setCookie('mtc_id', $leadFromQuery->getId(), null);
         $this->addAuditLogForLead($leadFromQuery, 'create', ['message' => sprintf('Created new lead and respond Mautic cookie "mtc_id=%d"', $leadFromQuery->getId())]);
 
         // MAUTIC_LEAD_LASTACTIVE_LOGGED prevents a duplicate last-active update if another part of the request already logged it
         if (!defined('MAUTIC_LEAD_LASTACTIVE_LOGGED')) {
-            $leadRepository->updateLastActive($leadFromQuery->getId());
+            $this->leadRepository->updateLastActive($leadFromQuery->getId());
             define('MAUTIC_LEAD_LASTACTIVE_LOGGED', 1);
         }
 
@@ -222,7 +222,7 @@ class PublicController extends AbstractFormController
     /**
      * @param array<string, mixed> $query
      */
-    protected function updateLeadWithQueryParams(Lead $lead, array $query, LeadRepository $leadRepository): void
+    protected function updateLeadWithQueryParams(Lead $lead, array $query): void
     {
         $leadUpdated = false;
 
@@ -234,7 +234,7 @@ class PublicController extends AbstractFormController
 
         if ($leadUpdated) {
             try {
-                $leadRepository->saveEntity($lead);
+                $this->leadRepository->saveEntity($lead);
             } catch (\Exception $e) {
                 $this->logger->error(sprintf('%s: Failed to save lead #%d', self::LOG_PREFIX, $lead->getId()), ['exception' => $e]);
             }

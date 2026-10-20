@@ -81,7 +81,7 @@ class PublicController extends AbstractFormController
         $featureSettings = $this->config->getFeatureSettings();
 
         if (empty($featureSettings['parameter_primary'] ?? null)) {
-            $this->logger->error(sprintf('%s: Required feature-setting "parameter_primary" is not configured.', self::LOG_PREFIX));
+            $this->logger->error(sprintf('%s: Required feature-setting "parameter_primary" (identifier) is not configured.', self::LOG_PREFIX));
 
             return $this->anonymousTrackingResponse();
         }
@@ -291,7 +291,7 @@ class PublicController extends AbstractFormController
     private function leadMatchesQueryByIdentifierParameters(Lead $lead, Lead $leadFromQuery, array $query, array $featureSettings): bool
     {
         if (!array_key_exists($featureSettings['parameter_primary'], $query)) {
-            throw new \LogicException(sprintf('Primary parameter "%s" must be present in query before calling this method.', $featureSettings['parameter_primary']));
+            throw new \LogicException(sprintf('Primary parameter (identifier) "%s" must be present in query before calling this method.', $featureSettings['parameter_primary']));
         }
 
         $primaryGetter  = 'get'.$featureSettings['parameter_primary']; // CustomFieldEntityTrait resolves the correct getter even for underscored field aliases
@@ -307,7 +307,7 @@ class PublicController extends AbstractFormController
         $secondaryMatches = array_key_exists($secondary, $query) && $leadFromQuery->$secondaryGetter() === $query[$secondary];
 
         if (!$secondaryMatches) {
-            throw new EnforceMatchingException(sprintf('The given lead #%d matches the query-lead #%d using configured primary-parameter "%s" for identification, but the secondary-parameter "%s" did not match!', $lead->getId(), $leadFromQuery->getId(), $featureSettings['parameter_primary'], $secondary), 1695899935);
+            throw new EnforceMatchingException(sprintf('The given lead #%d matches the query-lead #%d using configured primary-parameter (identifier) "%s" for identification, but the secondary-parameter (identifier) "%s" did not match!', $lead->getId(), $leadFromQuery->getId(), $featureSettings['parameter_primary'], $secondary), 1695899935);
         }
 
         return $primaryMatches;

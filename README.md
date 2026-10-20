@@ -28,8 +28,8 @@ OR
 ## Configuration
 The plugin has feature-settings to specify the contact-fields for identification:
 
-1. Primary parameter (required): set the contact-field which is used as query-parameter for identification (e.g. `email`). Only fields are shown where field-setting "Is Unique Identifier" is true.
-2. Secondary parameter (optional): specify an additional query-parameter which is used in combination with the first one to enforce identification.
+1. Primary identifier (required): set the contact-field which is used as query-parameter for identification (e.g. `email`). Only fields are shown where field-setting "Is Unique Identifier" is true.
+2. Secondary identifier (optional): specify an additional query-parameter which is used in combination with the first one to enforce identification.
 
 ## Usage
 1. Embed the control-pixel to the template of an external CMS where a customer is identified, e.g. after a successful login.

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MauticPlugin\LeuchtfeuerIdentitySyncBundle\Form\Type;
 
 use Doctrine\DBAL\Exception;
-use Mautic\LeadBundle\Model\FieldModel;
+use Mautic\LeadBundle\Entity\LeadFieldRepository;
 use MauticPlugin\LeuchtfeuerIdentitySyncBundle\Utility\DataProviderUtility;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -14,7 +14,7 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 
 class ConfigFeaturesType extends AbstractType
 {
-    public function __construct(protected DataProviderUtility $dataProviderUtility, protected FieldModel $fieldModel, private readonly \Mautic\LeadBundle\Entity\LeadFieldRepository $leadFieldRepository)
+    public function __construct(protected DataProviderUtility $dataProviderUtility, private readonly LeadFieldRepository $leadFieldRepository)
     {
     }
 

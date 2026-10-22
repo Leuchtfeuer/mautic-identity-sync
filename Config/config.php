@@ -13,29 +13,4 @@ return [
             ],
         ],
     ],
-    'services' => [
-        'other' => [
-            'leuchtfeueridentitysync.config' => [
-                'class'     => MauticPlugin\LeuchtfeuerIdentitySyncBundle\Integration\Config::class,
-                'arguments' => [
-                    'mautic.integrations.helper',
-                ],
-            ],
-        ],
-        'integrations' => [
-            'mautic.integration.leuchtfeueridentitysync' => [
-                'class' => MauticPlugin\LeuchtfeuerIdentitySyncBundle\Integration\LeuchtfeuerIdentitySyncIntegration::class,
-                'tags'  => [
-                    'mautic.integration',
-                    'mautic.basic_integration',
-                ],
-            ],
-            'leuchtfeueridentitysync.integration.configuration' => [
-                'class' => MauticPlugin\LeuchtfeuerIdentitySyncBundle\Integration\Support\ConfigSupport::class,
-                'tags'  => [
-                    'mautic.config_integration',
-                ],
-            ],
-        ],
-    ],
 ];
